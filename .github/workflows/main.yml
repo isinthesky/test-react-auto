@@ -17,14 +17,20 @@ jobs:
     - name: Install dependencies
       run: yarn install
     - name: Build
-      run: yarn build
+      id: build
+      run: |
+        OUTPUT=$(yarn build 2>&1)
+        echo "::set-output name=build_output::$OUTPUT"
+        yarn build
 
     - name: Send log on build failure
       if: ${{ failure() }}
       env:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
-         curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
+        BUILD_LOG=$(echo '${{ steps.build.outputs.build_output }}' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+        ERROR_MESSAGE=$(echo "$BUILD_LOG" | grep -A2 "Failed to compile." | tr '\n' ' ')
+        curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"$ERROR_MESSAGE\",\"build_log\":\"$BUILD_LOG\"}" "$LOG_WEBHOOK_URL"
     
     - name: main
       uses: peaceiris/actions-gh-pages@v3
