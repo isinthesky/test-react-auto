@@ -2,12 +2,13 @@ name: Log Forwarder
 
 on:
   workflow_run:
-    workflows: ['Deploy to GitHub Pages']
-    types: [failed]
+    workflows: ['Build and Deploy']
+    types: [completed]
 
 jobs:
   forward-logs:
     runs-on: ubuntu-latest
+    if: ${{ failure() }}
     
     steps:
     - name: Dump GitHub Context
