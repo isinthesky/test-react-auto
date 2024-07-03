@@ -25,11 +25,7 @@ jobs:
       env:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
-        BUILD_LOG=$(cat <<EOF
-        $(yarn build 2>&1)
-        EOF
-        )
-        curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\",\"build_log\":\"$BUILD_LOG\"}" "$LOG_WEBHOOK_URL"
+        curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
 
     - name: Check build status
       if: steps.build.outcome == 'failure'
