@@ -19,12 +19,12 @@ jobs:
     - name: Build
       run: yarn build
 
-      # 빌드 실패 시 로그 전송
+    - name: Send log on build failure
       if: ${{ failure() }}
       env:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
-          curl -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
+        curl -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
     
     - name: main
       uses: peaceiris/actions-gh-pages@v3
