@@ -10,23 +10,37 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
+    
     - name: Use Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '16'
+    
     - name: Install dependencies
       run: yarn install
+    
     - name: Build
+      id: build
       run: yarn build
+      continue-on-error: true
 
     - name: Send log on build failure
-      if: ${{ failure() }}
+      if: steps.build.outcome == 'failure'
       env:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
-         curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
-    
-    - name: main
+        BUILD_LOG=$(cat <<EOF
+        $(yarn build 2>&1)
+        EOF
+        )
+        curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\",\"build_log\":\"$BUILD_LOG\"}" "$LOG_WEBHOOK_URL"
+
+    - name: Check build status
+      if: steps.build.outcome == 'failure'
+      run: exit 1
+
+    - name: Deploy
+      if: success()
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.TESTAUTO }}
