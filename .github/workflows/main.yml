@@ -26,13 +26,10 @@ jobs:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
         curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
-
-    - name: Check build status
-      if: steps.build.outcome == 'failure'
-      run: exit 1
+        exit 1
 
     - name: Deploy
-      if: success()
+      if: steps.build.outcome == 'success'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.TESTAUTO }}
