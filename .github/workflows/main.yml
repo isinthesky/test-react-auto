@@ -20,25 +20,17 @@ jobs:
       id: build
       run: |
         OUTPUT=$(yarn build 2>&1)
-        EXIT_CODE=$?
-        echo "$OUTPUT"
-        echo "build_output<<EOF" >> $GITHUB_OUTPUT
-        echo "$OUTPUT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $EXIT_CODE
+        echo "::set-output name=build_output::$OUTPUT"
+        yarn build
 
     - name: Send log on build failure
-      if: failure()
+      if: ${{ failure() }}
       env:
         LOG_WEBHOOK_URL: ${{ secrets.TESTLOG }}
       run: |
-        BUILD_LOG="${{ steps.build.outputs.build_output }}"
-        ERROR_MESSAGE=$(echo "$BUILD_LOG" | grep -A2 "Failed to compile." | tr '\n' ' ' | sed 's/"/\\"/g')
-        ESCAPED_BUILD_LOG=$(echo "$BUILD_LOG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
-        PAYLOAD="{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"$ERROR_MESSAGE\",\"build_log\":\"$ESCAPED_BUILD_LOG\"}"
-        echo "Sending payload: $PAYLOAD"
-        curl --insecure -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$LOG_WEBHOOK_URL"
+        BUILD_LOG=$(echo '${{ steps.build.outputs.build_output }}' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+        ERROR_MESSAGE=$(echo "$BUILD_LOG" | grep -A2 "Failed to compile." | tr '\n' ' ')
+        curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"$ERROR_MESSAGE\",\"build_log\":\"$BUILD_LOG\"}" "$LOG_WEBHOOK_URL"
     
     - name: main
       uses: peaceiris/actions-gh-pages@v3
