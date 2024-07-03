@@ -17,7 +17,6 @@ jobs:
     - name: Install dependencies
       run: yarn install
     - name: Build
-      id: build
       run: |
         OUTPUT=$(yarn build 2>&1)
         EXIT_CODE=$?
@@ -31,7 +30,7 @@ jobs:
       run: |
          curl --insecure -X POST -H "Content-Type: application/json" -d "{\"workflow_name\":\"${{ github.workflow }}\",\"commit_sha\":\"${{ github.sha }}\",\"job_name\":\"${{ github.job }}\",\"error_message\":\"Build failure\"}" "$LOG_WEBHOOK_URL"
     
-    - name: main
+    - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.TESTAUTO }}
