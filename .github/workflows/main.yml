@@ -20,7 +20,9 @@ jobs:
       run: |
         OUTPUT=$(yarn build 2>&1)
         EXIT_CODE=$?
-        echo "::set-output name=build_output::$OUTPUT"
+        echo "build_output<<EOF" >> $GITHUB_OUTPUT
+        echo "$OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         exit $EXIT_CODE
 
     - name: Send log on build failure
